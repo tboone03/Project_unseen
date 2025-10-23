@@ -1,6 +1,8 @@
 # 🏃‍♂️ Running Event Tracker
 
-A lightweight, standalone web application for tracking runners and laps during running events. Built with React/Next.js with a portable HTML version that requires no installation!
+Lightweight lap tracker — React/Next.js plus a standalone HTML version (no install).
+
+Built for a friend who attempted and succeeded the 24‑hour run on. he used this app to log his own laps and others
 
 ![Running Event Tracker](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)
@@ -18,7 +20,6 @@ A lightweight, standalone web application for tracking runners and laps during r
 - **💾 Auto-Save**: Data persists automatically in browser localStorage
 - **🗑️ Data Management**: Clear all data with confirmation dialog
 - **📱 Responsive Design**: Works seamlessly on desktop, tablet, and mobile
-- **🎨 Custom Color Scheme**: Professional grey (#8e8e8e) and red (#f56b5e) theme
 - **⚡ Offline-First**: Works completely offline once loaded
 
 ## 🚀 Quick Start
@@ -46,58 +47,14 @@ npm run dev
 npm run build
 ```
 
-## 📱 Screenshots
-
-### Main Interface
-
-- Left panel: Add new runners and search previous participants
-- Right panel: Queue management with current runner highlighted
-- Statistics bar: Total laps and event progress
-
-### Key Features
-
-- **Arthur System**: Automatic alternating runner (configurable)
-- **Lap Tracking**: Individual and cumulative lap counting
-- **Search Function**: Type any part of a name to quickly find runners
-- **Data Persistence**: All data saved locally in browser
-
 ## 💻 Technical Details
 
 ### Tech Stack
 
-- **Frontend Framework**: React 18 + Next.js 14
-- **Styling**: Custom CSS with responsive design
+- **Frontend Framework**: React + Next.js
+- **Styling**: Tailwind CSS with responsive design
 - **Data Storage**: Browser localStorage
 - **Export**: Static HTML/CSS/JavaScript
-
-### Browser Compatibility
-
-- ✅ Chrome (recommended)
-- ✅ Firefox
-- ✅ Safari
-- ✅ Edge
-- ✅ Mobile browsers
-
-### File Structure
-
-```
-running-event-tracker/
-├── app/
-│   ├── page.tsx          # Main React component
-│   ├── components/       # React components
-│   └── types/           # TypeScript definitions
-├── index.html           # Standalone version
-├── next.config.ts       # Next.js configuration
-└── package.json         # Dependencies
-```
-
-## 🎯 Perfect For
-
-- **School Sports Days**: Track student performance in running events
-- **Community Races**: Manage participants in local fun runs
-- **Training Sessions**: Monitor multiple athletes during practice
-- **Charity Events**: Keep track of laps for fundraising runs
-- **Corporate Events**: Organize company fitness challenges
 
 ## 📖 How to Use
 
@@ -140,41 +97,7 @@ const ARTHUR = {
 };
 ```
 
-### Color Scheme
-
-The app uses a custom color palette defined in CSS:
-
-- Background: `#e5e8e4` (light grey)
-- Queue panel: `#f56b5e` (red)
-- Other panels: `#8e8e8e` (dark grey)
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).
-
-## 👨‍💻 Developer
-
-**Thomas Boone** - _Creator and Developer_
-
-- Created as a practical solution for running event management
-- Focuses on simplicity and ease of use
-- No technical knowledge required for end users
-
-## 🙏 Acknowledgments
-
-- Designed for educational and community use
-- Built with accessibility and usability in mind
-- Inspired by the need for simple, effective event tracking
-
----
+    ---
 
 **📦 Just download and run - it's that simple!**
 
