@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Running Event Tracker - by Thomas Boone</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #e5e8e4;
+        color: black;
+        min-height: 100vh;
+      }
+
+      .banner {
+        background-color: #333;
+        color: white;
+        text-align: center;
+        padding: 1rem;
+        font-size: 1.5rem;
+        font-weight: bold;
+      }
+
+      .banner img {
+        width: 100px;
+        height: auto;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1rem;
+      }
+
+      .stats-bar {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #8e8e8e;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .stat-item {
+        text-align: center;
+        color: white;
+      }
+
+      .stat-label {
+        font-size: 0.875rem;
+        color: #e5e7eb;
+        margin-bottom: 0.25rem;
+      }
+
+      .stat-value {
+        font-size: 1.25rem;
+        font-weight: bold;
+      }
+
+      .clear-btn {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 1rem;
+      }
+
+      .btn-clear {
+        background-color: #dc2626;
+        color: white;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-size: 0.875rem;
+      }
+
+      .btn-clear:hover {
+        background-color: #b91c1c;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+
+      @media (min-width: 768px) {
+        .grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .panel {
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      }
+
+      .panel-left {
+        background-color: #8e8e8e;
+      }
+
+      .panel-right {
+        background-color: #f56b5e;
+      }
+
+      .panel h2 {
+        color: white;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        font-weight: bold;
+      }
+
+      .form-group {
+        margin-bottom: 1rem;
+      }
+
+      .form-label {
+        display: block;
+        color: white;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+      }
+
+      .form-input {
+        width: 100%;
+        background-color: #e5e8e4;
+        color: black;
+        padding: 0.5rem 1rem;
+        border: 1px solid #9ca3af;
+        border-radius: 0.375rem;
+        font-size: 1rem;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      .btn-primary {
+        width: 100%;
+        background-color: #f56b5e;
+        color: white;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 0.375rem;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+      }
+
+      .btn-primary:hover {
+        background-color: #e55a4e;
+      }
+
+      .current-runner {
+        background-color: #d45650;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .current-label {
+        font-size: 0.875rem;
+        color: #e5e7eb;
+      }
+
+      .current-name {
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: white;
+      }
+
+      .btn-next {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        margin-bottom: 1.5rem;
+        font-size: 1rem;
+      }
+
+      .btn-next:enabled {
+        background-color: #d45650;
+        color: white;
+      }
+
+      .btn-next:enabled:hover {
+        background-color: #b91c1c;
+      }
+
+      .btn-next:disabled {
+        background-color: #6e6e6e;
+        color: #9ca3af;
+        cursor: not-allowed;
+      }
+
+      .queue-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .queue-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        border-radius: 0.375rem;
+        background-color: #c55650;
+      }
+
+      .queue-item.current {
+        background-color: #d45650;
+      }
+
+      .queue-item-left {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .queue-number {
+        width: 2rem;
+        height: 2rem;
+        background-color: #8e8e8e;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+      }
+
+      .queue-name {
+        color: white;
+        font-weight: 500;
+      }
+
+      .btn-delete {
+        background: none;
+        border: none;
+        color: white;
+        padding: 0.5rem;
+        border-radius: 0.375rem;
+        cursor: pointer;
+        font-size: 1rem;
+      }
+
+      .btn-delete:hover {
+        background-color: #dc2626;
+      }
+
+      .search-section {
+        margin-top: 1.5rem;
+      }
+
+      .search-section h3 {
+        color: white;
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+      }
+
+      .search-input {
+        width: 100%;
+        background-color: #e5e8e4;
+        color: black;
+        padding: 0.5rem;
+        border: 1px solid #6b7280;
+        border-radius: 0.5rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .search-results {
+        max-height: 12rem;
+        overflow-y: auto;
+        background-color: #6e6e6e;
+        border-radius: 0.5rem;
+        border: 1px solid #4b5563;
+      }
+
+      .search-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        border-bottom: 1px solid #4b5563;
+        cursor: pointer;
+        color: white;
+      }
+
+      .search-item:hover {
+        background-color: #4b5563;
+      }
+
+      .search-item:last-child {
+        border-bottom: none;
+      }
+
+      .search-laps {
+        color: #93c5fd;
+        font-size: 0.875rem;
+      }
+
+      .leaderboard {
+        margin-top: 2rem;
+      }
+
+      .leaderboard h2 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        color: black;
+      }
+
+      .leaderboard-panel {
+        background-color: #8e8e8e;
+        border-radius: 0.5rem;
+        padding: 1rem;
+      }
+
+      .leaderboard table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .leaderboard th,
+      .leaderboard td {
+        padding: 0.5rem;
+        color: white;
+        border-bottom: 1px solid #6b7280;
+      }
+
+      .leaderboard th {
+        font-weight: bold;
+        text-align: left;
+      }
+
+      .leaderboard th:last-child {
+        text-align: right;
+      }
+
+      .leaderboard td:last-child {
+        text-align: right;
+      }
+
+      .credits {
+        margin-top: 2rem;
+        text-align: center;
+      }
+
+      .credits p {
+        font-size: 0.875rem;
+        color: #6b7280;
+      }
+
+      .warning {
+        background-color: #d97706;
+        color: white;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-top: 1rem;
+      }
+
+      .warning p {
+        font-size: 0.875rem;
+      }
+
+      .clear-search {
+        margin-top: 0.5rem;
+        color: #93c5fd;
+        font-size: 0.875rem;
+        cursor: pointer;
+      }
+
+      .clear-search:hover {
+        color: #dbeafe;
+      }
+
+      .empty-message {
+        padding: 0.75rem;
+        text-align: center;
+        color: #d1d5db;
+        font-size: 0.875rem;
+      }
+
+      @media (max-width: 768px) {
+        .stats-bar {
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .stat-item {
+          display: flex;
+          justify-content: space-between;
+          width: 100%;
+          text-align: left;
+        }
+
+        .stat-label {
+          margin-bottom: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Banner -->
+    <div class="banner">
+      <img
+        src="https://cdn2.lnk.bi/profilepics/-2436190_20250924353.jpg"
+        alt="Logo"
+      />
+      <div>Running Event Tracker</div>
+    </div>
+
+    <div class="container">
+      <!-- Statistics Bar -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <div class="stat-label">Totaal Rondjes</div>
+          <div class="stat-value" id="totalLaps">0</div>
+        </div>
+      </div>
+
+      <!-- Clear Button -->
+      <div class="clear-btn" id="clearButtonContainer" style="display: none">
+        <button class="btn-clear" onclick="clearAllData()">🗑️ Wis Alles</button>
+      </div>
+
+      <div class="grid">
+        <!-- Left Panel - Add Runner -->
+        <div class="panel panel-left">
+          <h2>Loper toevoegen</h2>
+
+          <form onsubmit="addRunner(event)">
+            <div class="form-group">
+              <label class="form-label">Voornaam</label>
+              <input
+                type="text"
+                class="form-input"
+                id="firstName"
+                placeholder="Voer voornaam in..."
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Achternaam</label>
+              <input
+                type="text"
+                class="form-input"
+                id="lastName"
+                placeholder="Voer achternaam in..."
+                required
+              />
+            </div>
+            <button type="submit" class="btn-primary">
+              Toevoegen aan queue
+            </button>
+          </form>
+
+          <!-- Search Previous Runners -->
+          <div class="search-section" id="searchSection" style="display: none">
+            <h3>Vorige Lopers</h3>
+            <input
+              type="text"
+              class="search-input"
+              id="searchInput"
+              placeholder="Zoek loper... (bijv. 'john' of 'doe')"
+              onkeyup="filterRunners()"
+            />
+            <div class="search-results" id="searchResults"></div>
+            <div
+              class="clear-search"
+              id="clearSearch"
+              style="display: none"
+              onclick="clearSearch()"
+            >
+              ✕ Wis zoekopdracht
+            </div>
+          </div>
+
+          <!-- Warning Message -->
+          <div class="warning" id="warningMessage" style="display: none">
+            <p>
+              ⚠️ Je bent aan het einde van de queue. Voeg een nieuwe loper toe
+              om verder te gaan.
+            </p>
+          </div>
+        </div>
+
+        <!-- Right Panel - Queue -->
+        <div class="panel panel-right">
+          <h2>Volgende lopers</h2>
+
+          <div class="current-runner">
+            <div class="current-label">Huidige loper</div>
+            <div class="current-name" id="currentRunner">Nog geen lopers</div>
+          </div>
+
+          <button
+            class="btn-next"
+            id="nextButton"
+            onclick="nextRunner()"
+            disabled
+          >
+            Voeg eerst een loper toe
+          </button>
+
+          <div class="queue-list" id="queueList"></div>
+        </div>
+      </div>
+
+      <!-- Leaderboard -->
+      <div class="leaderboard">
+        <h2>Leaderboard</h2>
+        <div class="leaderboard-panel">
+          <table>
+            <thead>
+              <tr>
+                <th>Naam</th>
+                <th>Rondjes</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboardBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Credits -->
+      <div class="credits">
+        <p>Ontwikkeld door Thomas Boone</p>
+      </div>
+    </div>
+
+    <script>
+      // Global state
+      let runners = [];
+      let currentIndex = 0;
+      let searchTerm = "";
+
+      const ARTHUR = {
+        firstName: "Arthur",
+        lastName: "Vansteenkiste",
+        laps: 0,
+      };
+
+      // Load data from localStorage
+      function loadData() {
+        const savedRunners = localStorage.getItem("runners");
+        const savedIndex = localStorage.getItem("currentIndex");
+
+        if (savedRunners) {
+          runners = JSON.parse(savedRunners);
+        }
+        if (savedIndex) {
+          currentIndex = parseInt(savedIndex);
+        }
+
+        updateDisplay();
+      }
+
+      // Save data to localStorage
+      function saveData() {
+        if (runners.length > 0) {
+          localStorage.setItem("runners", JSON.stringify(runners));
+          localStorage.setItem("currentIndex", currentIndex.toString());
+        }
+      }
+
+      // Add runner to queue
+      function addRunner(event) {
+        event.preventDefault();
+
+        const firstName = document.getElementById("firstName").value.trim();
+        const lastName = document.getElementById("lastName").value.trim();
+
+        if (!firstName || !lastName) return;
+
+        const newRunner = { firstName, lastName, laps: 0 };
+
+        if (runners.length === 0) {
+          runners = [newRunner, { ...ARTHUR }];
+        } else {
+          runners.push(newRunner, { ...ARTHUR });
+        }
+
+        // Clear form
+        document.getElementById("firstName").value = "";
+        document.getElementById("lastName").value = "";
+
+        saveData();
+        updateDisplay();
+      }
+
+      // Next runner
+      function nextRunner() {
+        if (runners.length === 0 || currentIndex === runners.length - 1) return;
+
+        // Increment current runner's laps
+        runners[currentIndex].laps++;
+        currentIndex++;
+
+        saveData();
+        updateDisplay();
+      }
+
+      // Delete runner from queue
+      function deleteRunner(index) {
+        const absoluteIndex = currentIndex + index;
+        runners.splice(absoluteIndex, 1);
+
+        if (runners.length === 0) {
+          currentIndex = 0;
+        }
+
+        saveData();
+        updateDisplay();
+      }
+
+      // Get unique runners (excluding Arthur)
+      function getUniqueRunners() {
+        const unique = [];
+        const seen = new Set();
+
+        runners.forEach((runner) => {
+          if (runner.firstName === "Arthur") return;
+
+          const key = `${runner.firstName}-${runner.lastName}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            unique.push(runner);
+          }
+        });
+
+        return unique.sort((a, b) =>
+          `${a.firstName} ${a.lastName}`.localeCompare(
+            `${b.firstName} ${b.lastName}`
+          )
+        );
+      }
+
+      // Get total laps for a runner
+      function getTotalLaps(runner) {
+        return runners
+          .filter(
+            (r) =>
+              r.firstName === runner.firstName && r.lastName === runner.lastName
+          )
+          .reduce((sum, r) => sum + r.laps, 0);
+      }
+
+      // Get total laps across all runners
+      function getTotalLapsOverall() {
+        return runners.reduce((sum, runner) => sum + runner.laps, 0);
+      }
+
+      // Add existing runner back to queue
+      function addExistingRunner(runner) {
+        const newRunner = { ...runner, laps: 0 };
+        runners.push(newRunner, { ...ARTHUR });
+
+        document.getElementById("searchInput").value = "";
+        searchTerm = "";
+
+        saveData();
+        updateDisplay();
+      }
+
+      // Filter runners based on search
+      function filterRunners() {
+        searchTerm = document.getElementById("searchInput").value;
+        updateSearchResults();
+
+        const clearSearch = document.getElementById("clearSearch");
+        clearSearch.style.display = searchTerm ? "block" : "none";
+      }
+
+      // Clear search
+      function clearSearch() {
+        document.getElementById("searchInput").value = "";
+        searchTerm = "";
+        updateSearchResults();
+        document.getElementById("clearSearch").style.display = "none";
+      }
+
+      // Update search results
+      function updateSearchResults() {
+        const searchResults = document.getElementById("searchResults");
+        const uniqueRunners = getUniqueRunners();
+
+        const filteredRunners = uniqueRunners.filter((runner) => {
+          const fullName =
+            `${runner.firstName} ${runner.lastName}`.toLowerCase();
+          return fullName.includes(searchTerm.toLowerCase());
+        });
+
+        if (filteredRunners.length === 0) {
+          searchResults.innerHTML = `<div class="empty-message">${
+            searchTerm ? "Geen lopers gevonden" : "Geen vorige lopers"
+          }</div>`;
+          return;
+        }
+
+        searchResults.innerHTML = filteredRunners
+          .map(
+            (runner) => `
+                <div class="search-item" onclick="addExistingRunner({firstName: '${
+                  runner.firstName
+                }', lastName: '${runner.lastName}'})">
+                    <span>${runner.firstName} ${runner.lastName}</span>
+                    <span class="search-laps">${getTotalLaps(
+                      runner
+                    )} rondjes</span>
+                </div>
+            `
+          )
+          .join("");
+      }
+
+      // Clear all data
+      function clearAllData() {
+        if (
+          confirm(
+            "Weet je zeker dat je alles wilt wissen? Dit verwijdert de hele queue en leaderboard en kan niet ongedaan worden gemaakt."
+          )
+        ) {
+          runners = [];
+          currentIndex = 0;
+          searchTerm = "";
+
+          localStorage.removeItem("runners");
+          localStorage.removeItem("currentIndex");
+
+          document.getElementById("searchInput").value = "";
+          updateDisplay();
+        }
+      }
+
+      // Update entire display
+      function updateDisplay() {
+        updateCurrentRunner();
+        updateNextButton();
+        updateQueue();
+        updateLeaderboard();
+        updateSearchSection();
+        updateWarning();
+        updateClearButton();
+        updateStats();
+      }
+
+      // Update statistics bar
+      function updateStats() {
+        const totalLaps = getTotalLapsOverall();
+        const uniqueRunnersCount = getUniqueRunners().length;
+        const queuePosition =
+          runners.length > 0 ? `${currentIndex + 1}/${runners.length}` : "0/0";
+
+        document.getElementById("totalLaps").textContent = totalLaps;
+        document.getElementById("uniqueRunners").textContent =
+          uniqueRunnersCount;
+        document.getElementById("queuePosition").textContent = queuePosition;
+      }
+
+      // Update current runner display
+      function updateCurrentRunner() {
+        const currentRunnerElement = document.getElementById("currentRunner");
+
+        if (runners.length === 0 || currentIndex >= runners.length) {
+          currentRunnerElement.textContent = "Nog geen lopers";
+          return;
+        }
+
+        const current = runners[currentIndex];
+        const totalLaps = getTotalLaps(current);
+        currentRunnerElement.textContent = `${current.firstName} ${current.lastName} (${totalLaps} rondjes)`;
+      }
+
+      // Update next button
+      function updateNextButton() {
+        const nextButton = document.getElementById("nextButton");
+        const isDisabled =
+          runners.length === 0 || currentIndex === runners.length - 1;
+
+        nextButton.disabled = isDisabled;
+        nextButton.textContent = isDisabled
+          ? "Voeg eerst een loper toe"
+          : "Next";
+      }
+
+      // Update queue display
+      function updateQueue() {
+        const queueList = document.getElementById("queueList");
+        const upcomingRunners = runners.slice(currentIndex);
+
+        if (upcomingRunners.length === 0) {
+          queueList.innerHTML = "";
+          return;
+        }
+
+        queueList.innerHTML = upcomingRunners
+          .map((runner, index) => {
+            const totalLaps = getTotalLaps(runner);
+            const isCurrentClass = index === 0 ? "current" : "";
+
+            return `
+                    <div class="queue-item ${isCurrentClass}">
+                        <div class="queue-item-left">
+                            <div class="queue-number">#${index + 1}</div>
+                            <span class="queue-name">${runner.firstName} ${
+              runner.lastName
+            } (${totalLaps} rondjes)</span>
+                        </div>
+                        <button class="btn-delete" onclick="deleteRunner(${index})">✕</button>
+                    </div>
+                `;
+          })
+          .join("");
+      }
+
+      // Update leaderboard
+      function updateLeaderboard() {
+        const leaderboardBody = document.getElementById("leaderboardBody");
+
+        // Combine runners and sum laps
+        const uniqueRunners = {};
+        runners.forEach((runner) => {
+          const key = `${runner.firstName} ${runner.lastName}`;
+          if (uniqueRunners[key]) {
+            uniqueRunners[key].laps += runner.laps;
+          } else {
+            uniqueRunners[key] = { ...runner };
+          }
+        });
+
+        // Sort by laps (highest first)
+        const sortedRunners = Object.values(uniqueRunners).sort(
+          (a, b) => b.laps - a.laps
+        );
+
+        leaderboardBody.innerHTML = sortedRunners
+          .map(
+            (runner) => `
+                <tr>
+                    <td>${runner.firstName} ${runner.lastName}</td>
+                    <td>${runner.laps}</td>
+                </tr>
+            `
+          )
+          .join("");
+      }
+
+      // Update search section visibility
+      function updateSearchSection() {
+        const searchSection = document.getElementById("searchSection");
+        const uniqueRunners = getUniqueRunners();
+
+        if (uniqueRunners.length > 0) {
+          searchSection.style.display = "block";
+          updateSearchResults();
+        } else {
+          searchSection.style.display = "none";
+        }
+      }
+
+      // Update warning message
+      function updateWarning() {
+        const warningMessage = document.getElementById("warningMessage");
+        const shouldShow =
+          runners.length > 0 && currentIndex === runners.length - 1;
+        warningMessage.style.display = shouldShow ? "block" : "none";
+      }
+
+      // Update clear button visibility
+      function updateClearButton() {
+        const clearButtonContainer = document.getElementById(
+          "clearButtonContainer"
+        );
+        clearButtonContainer.style.display =
+          runners.length > 0 ? "flex" : "none";
+      }
+
+      // Initialize app
+      document.addEventListener("DOMContentLoaded", loadData);
+    </script>
+  </body>
+</html>

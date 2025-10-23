@@ -1,103 +1,293 @@
-import Image from "next/image";
+"use client";
+
+import { Runner } from "../types/index";
+import React from "react";
+import RunnerForm from "../components/Runnerform";
+import QueueView from "../components/QueueView";
+import Banner from "../components/banner";
+import LeaderBoard from "../components/LeaderBoard";
+
+const ARTHUR: Runner = {
+  firstName: "Arthur",
+  lastName: "Vansteenkiste",
+  laps: 0,
+};
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [runners, setRunners] = React.useState<Runner[]>([]);
+  const [currentIndex, setCurrentIndex] = React.useState(0);
+  const [searchTerm, setSearchTerm] = React.useState("");
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  // Load saved data when component mounts
+  React.useEffect(() => {
+    const savedRunners = localStorage.getItem("runners");
+    const savedIndex = localStorage.getItem("currentIndex");
+
+    if (savedRunners) {
+      setRunners(JSON.parse(savedRunners));
+    }
+    if (savedIndex) {
+      setCurrentIndex(parseInt(savedIndex));
+    }
+  }, []);
+
+  // Save data whenever runners or currentIndex changes
+  React.useEffect(() => {
+    if (runners.length > 0) {
+      localStorage.setItem("runners", JSON.stringify(runners));
+      localStorage.setItem("currentIndex", currentIndex.toString());
+    }
+  }, [runners, currentIndex]);
+
+  const addRunner = (runner: Runner) => {
+    setRunners((prev) => {
+      // Check if runner already exists (excluding Arthur)
+      if (prev.length === 0) {
+        return [
+          { ...runner, laps: 0 },
+          { ...ARTHUR, laps: 0 },
+        ];
+      }
+
+      // Always add the new runner and Arthur at the end, regardless of whether they exist
+      return [...prev, { ...runner, laps: 0 }, { ...ARTHUR, laps: 0 }];
+    });
+  };
+
+  const nextRunner = () => {
+    if (runners.length === 0) return;
+
+    // Check if we're at the last position - if so, don't allow next
+    const isLastPosition = currentIndex === runners.length - 1;
+    if (isLastPosition) return;
+
+    setRunners((prev) =>
+      prev.map((runner, idx) =>
+        idx === currentIndex ? { ...runner, laps: runner.laps + 1 } : runner
+      )
+    );
+
+    setCurrentIndex((prev) => prev + 1);
+  };
+
+  // Helper function to check if Next button should be disabled
+  const isNextDisabled = () => {
+    return runners.length === 0 || currentIndex === runners.length - 1;
+  };
+
+  // Get only the upcoming runners for the queue display (from current position onward)
+  const upcomingQueue = runners.slice(currentIndex);
+
+  const handleDelete = (index: number) => {
+    // Convert relative queue index back to absolute runners array index
+    const absoluteIndex = currentIndex + index;
+
+    setRunners((prev) => {
+      // Remove the runner at the specified absolute index
+      const newQueue = prev.filter((_, i) => i !== absoluteIndex);
+
+      // If queue becomes empty, reset currentIndex
+      if (newQueue.length === 0) {
+        setCurrentIndex(0);
+        return [];
+      }
+
+      // Don't adjust currentIndex - this prevents showing already completed runners
+      // Only adjust if we deleted the current runner (index 0 in the upcoming queue)
+      if (index === 0 && currentIndex < newQueue.length) {
+        // Current runner was deleted, but don't move backwards
+        // Keep the same currentIndex so we stay at the same position in the queue
+        return newQueue;
+      }
+
+      // If we deleted a runner after the current one, no adjustment needed
+      return newQueue;
+    });
+  };
+
+  // Clear everything with confirmation
+  const clearAllData = () => {
+    if (
+      window.confirm(
+        "Weet je zeker dat je alles wilt wissen? Dit verwijdert de hele queue en leaderboard en kan niet ongedaan worden gemaakt."
+      )
+    ) {
+      setRunners([]);
+      setCurrentIndex(0);
+      setSearchTerm("");
+      localStorage.removeItem("runners");
+      localStorage.removeItem("currentIndex");
+      localStorage.removeItem("backup");
+    }
+  };
+
+  // Get unique runners from all runners (excluding Arthur)
+  const getUniqueRunners = () => {
+    const uniqueRunners = runners.reduce((acc, runner) => {
+      const existingRunner = acc.find(
+        (r) =>
+          r.firstName === runner.firstName && r.lastName === runner.lastName
+      );
+
+      if (!existingRunner && runner.firstName !== "Arthur") {
+        acc.push({ ...runner });
+      }
+
+      return acc;
+    }, [] as Runner[]);
+
+    return uniqueRunners.sort((a, b) => {
+      const aName = `${a.firstName} ${a.lastName}`;
+      const bName = `${b.firstName} ${b.lastName}`;
+      return aName.localeCompare(bName);
+    });
+  };
+
+  // Filter runners based on search term
+  const filteredRunners = getUniqueRunners().filter((runner) => {
+    const fullName = `${runner.firstName} ${runner.lastName}`.toLowerCase();
+    return fullName.includes(searchTerm.toLowerCase());
+  });
+
+  // Get total laps for a specific runner
+  const getTotalLaps = (runner: Runner) => {
+    return runners
+      .filter(
+        (r) =>
+          r.firstName === runner.firstName && r.lastName === runner.lastName
+      )
+      .reduce((sum, r) => sum + r.laps, 0);
+  };
+
+  return (
+    <div
+      className="min-h-screen text-black"
+      style={{ backgroundColor: "#e5e8e4" }}
+    >
+      <Banner />
+      <div className="container mx-auto p-4">
+        {/* Clear All Button */}
+        {runners.length > 0 && (
+          <div className="mb-4 flex justify-end">
+            <button
+              onClick={clearAllData}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+            >
+              🗑️ Wis Alles
+            </button>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div
+            className="rounded-lg p-6 shadow-xl"
+            style={{ backgroundColor: "#8e8e8e" }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+            <h2 className="text-2xl font-bold mb-6 text-white">
+              Loper toevoegen
+            </h2>
+            <RunnerForm addRunner={addRunner} />
+
+            {/* Search and Add Previous Runners */}
+            {getUniqueRunners().length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-3 text-white">
+                  Vorige Lopers
+                </h3>
+
+                {/* Search Input */}
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    placeholder="Zoek loper... (bijv. 'john' of 'doe')"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full p-2 border border-gray-600 rounded-lg text-black placeholder-gray-600 focus:outline-none focus:border-blue-500"
+                    style={{ backgroundColor: "#e5e8e4" }}
+                  />
+                </div>
+
+                {/* Filtered Runners List */}
+                <div
+                  className="max-h-48 overflow-y-auto rounded-lg"
+                  style={{ backgroundColor: "#6e6e6e" }}
+                >
+                  {filteredRunners.length > 0 ? (
+                    <div className="divide-y divide-gray-500">
+                      {filteredRunners.map((runner, index) => (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            addRunner(runner);
+                            setSearchTerm(""); // Clear search after adding
+                          }}
+                          className="w-full text-left p-3 hover:bg-gray-500 transition-colors flex justify-between items-center text-white"
+                        >
+                          <span className="font-medium">
+                            {runner.firstName} {runner.lastName}
+                          </span>
+                          <span className="text-blue-300 text-sm">
+                            {getTotalLaps(runner)} rondjes
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-3 text-gray-300 text-center text-sm">
+                      {searchTerm
+                        ? "Geen lopers gevonden"
+                        : "Geen vorige lopers"}
+                    </div>
+                  )}
+                </div>
+
+                {/* Quick clear search */}
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="mt-2 text-sm text-blue-300 hover:text-blue-200"
+                  >
+                    ✕ Wis zoekopdracht
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Message when at end of queue */}
+            {isNextDisabled() && runners.length > 0 && (
+              <div className="mt-4 p-4 bg-yellow-600 rounded-lg">
+                <p className="text-sm text-white">
+                  ⚠️ Je bent aan het einde van de queue. Voeg een nieuwe loper
+                  toe om verder te gaan.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div
+            className="rounded-lg p-6 shadow-xl"
+            style={{ backgroundColor: "#f56b5e" }}
+          >
+            <QueueView
+              queue={upcomingQueue}
+              currentIndex={0} // Always 0 since we're showing from current position
+              nextRunner={nextRunner}
+              onDelete={handleDelete}
+              isNextDisabled={isNextDisabled()}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {/* LeaderBoard - Full width below the split screen */}
+        <div className="mt-8">
+          <LeaderBoard runners={runners} />
+        </div>
+
+        {/* Credits */}
+        <div className="mt-8 text-center">
+          <p className="text-sm text-gray-600">Ontwikkeld door Thomas Boone</p>
+        </div>
+      </div>
     </div>
   );
 }
